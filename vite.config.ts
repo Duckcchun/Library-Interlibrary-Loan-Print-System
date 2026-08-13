@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig({
-  base: process.env.GITHUB_PAGES ? '/Library-Interlibrary-Loan-Print-System/' : '/',
+  base: '/',
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
