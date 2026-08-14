@@ -4,6 +4,7 @@ import * as XLSX from 'xlsx'
 interface LoanRecord {
   이용자명: string
   요청도서관: string
+  요청도서관_원본: string
   등록번호: string
   자료실: string
   청구기호: string
@@ -16,7 +17,11 @@ const LIBRARY_NAME_MAP: Record<string, string> = {
 }
 
 function normalizeLibraryName(name: string): string {
-  return LIBRARY_NAME_MAP[name] || name
+  // 먼저 직접 매핑 확인
+  if (LIBRARY_NAME_MAP[name]) return LIBRARY_NAME_MAP[name]
+  // 스마트도서관: "OO스마트도서관" → "OO" (스마트도서관 제거)
+  if (name.includes('스마트도서관')) return name.replace('스마트도서관', '')
+  return name
 }
 
 /* ── 광진구립 8개관 색상 (새마을문고 제외) ── */
@@ -31,17 +36,16 @@ const LIBRARY_COLORS: Record<string, string> = {
   '광진어린이영어도서관': '#EF4036',
 }
 
-/* ── 스마트도서관 (통일 색상) ── */
-const SMART_LIBRARIES = [
-  '군자역스마트도서관',
-  '중곡스마트도서관',
-  '구의역스마트도서관',
-  '광진구민체육센터스마트도서관',
-  '광진문화예술회관스마트도서관',
-  '어린이대공원역스마트도서관',
-  '아차산역스마트도서관',
-]
-const SMART_LIBRARY_COLOR = '#555555'
+/* ── 스마트도서관 (각각 다른 색상) ── */
+const SMART_LIBRARY_COLORS: Record<string, string> = {
+  '군자역스마트도서관': '#2BBBAD',
+  '중곡스마트도서관': '#FF6F61',
+  '구의역스마트도서관': '#6B5B95',
+  '광진구민체육센터스마트도서관': '#88B04B',
+  '광진문화예술회관스마트도서관': '#F7786B',
+  '어린이대공원역스마트도서관': '#91A8D0',
+  '아차산역스마트도서관': '#B5838D',
+}
 
 /* ── 폴백 색상 ── */
 const FALLBACK_COLORS = [
@@ -49,12 +53,17 @@ const FALLBACK_COLORS = [
   '#F97316', '#14B8A6', '#EC4899', '#84CC16', '#06B6D4',
 ]
 
-function getLibraryColor(name: string): string {
-  if (LIBRARY_COLORS[name]) return LIBRARY_COLORS[name]
-  if (SMART_LIBRARIES.includes(name)) return SMART_LIBRARY_COLOR
-  if (name.includes('스마트도서관')) return SMART_LIBRARY_COLOR
+function getLibraryColor(originalName: string): string {
+  if (LIBRARY_COLORS[originalName]) return LIBRARY_COLORS[originalName]
+  if (SMART_LIBRARY_COLORS[originalName]) return SMART_LIBRARY_COLORS[originalName]
+  // 아직 등록 안 된 스마트도서관용 폴백
+  if (originalName.includes('스마트도서관')) {
+    let hash = 0
+    for (let i = 0; i < originalName.length; i++) hash = originalName.charCodeAt(i) + ((hash << 5) - hash)
+    return FALLBACK_COLORS[Math.abs(hash) % FALLBACK_COLORS.length]
+  }
   let hash = 0
-  for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
+  for (let i = 0; i < originalName.length; i++) hash = originalName.charCodeAt(i) + ((hash << 5) - hash)
   return FALLBACK_COLORS[Math.abs(hash) % FALLBACK_COLORS.length]
 }
 
@@ -94,6 +103,7 @@ function parseExcel(buffer: ArrayBuffer): LoanRecord[] {
     records.push({
       이용자명: name,
       요청도서관: normalizeLibraryName(rawLibName),
+      요청도서관_원본: rawLibName,
       등록번호: idxReg !== -1 ? String(row[idxReg] ?? '').trim() : '',
       자료실: idxRoom !== -1 ? String(row[idxRoom] ?? '').trim() : '',
       청구기호: idxCall !== -1 ? String(row[idxCall] ?? '').trim() : '',
@@ -105,14 +115,14 @@ function parseExcel(buffer: ArrayBuffer): LoanRecord[] {
 
 /* ── 카드 컴포넌트 ── */
 function LoanCard({ record }: { record: LoanRecord }) {
-  const bgColor = getLibraryColor(record.요청도서관)
+  const bgColor = getLibraryColor(record.요청도서관_원본)
   return (
     <div className="border-2 border-black flex flex-col" style={{ height: '100%', overflow: 'hidden' }}>
       {/* Row 1: 이용자명 */}
-      <div className="border-b-2 border-black flex items-center justify-center flex-shrink-0" style={{ flex: 2, minHeight: 0 }}>
+      <div className="border-b-2 border-black flex items-center justify-center flex-shrink-0" style={{ flex: 2.5, minHeight: 0 }}>
         <span
           className="font-black text-center leading-tight"
-          style={{ fontSize: '1.8rem', letterSpacing: '0.2em' }}
+          style={{ fontSize: '2rem', letterSpacing: '0.2em' }}
         >
           {record.이용자명}
         </span>
@@ -121,11 +131,11 @@ function LoanCard({ record }: { record: LoanRecord }) {
       {/* Row 2: 요청도서관 */}
       <div
         className="library-badge border-b-2 border-black flex items-center justify-center flex-shrink-0"
-        style={{ backgroundColor: bgColor, flex: 1.5, minHeight: 0 }}
+        style={{ backgroundColor: bgColor, flex: 2, minHeight: 0 }}
       >
         <span
           className="font-bold text-white text-center leading-tight"
-          style={{ fontSize: '1.15rem', letterSpacing: '0.15em' }}
+          style={{ fontSize: '1.25rem', letterSpacing: '0.15em' }}
         >
           {record.요청도서관 || '—'}
         </span>
@@ -133,21 +143,21 @@ function LoanCard({ record }: { record: LoanRecord }) {
 
       {/* Row 3: 등록번호 | 자료실 */}
       <div className="border-b border-black flex flex-shrink-0" style={{ flex: 1, minHeight: 0 }}>
-        <div className="flex items-center px-1.5" style={{ flex: 1, fontSize: '0.82rem' }}>
+        <div className="flex items-center px-1.5" style={{ flex: 1, fontSize: '0.8rem' }}>
           {record.등록번호}
         </div>
-        <div className="border-l border-black flex items-center justify-end px-1.5" style={{ flex: 1, fontSize: '0.78rem', textAlign: 'right' }}>
+        <div className="border-l border-black flex items-center justify-end px-1.5" style={{ flex: 1, fontSize: '0.75rem', textAlign: 'right' }}>
           {record.자료실}
         </div>
       </div>
 
       {/* Row 4: 청구기호 */}
-      <div className="border-b border-black flex items-center justify-center px-1 flex-shrink-0" style={{ fontSize: '0.85rem', flex: 1, minHeight: 0 }}>
+      <div className="border-b border-black flex items-center justify-center px-1 flex-shrink-0" style={{ fontSize: '0.8rem', flex: 1, minHeight: 0 }}>
         <span className="text-center leading-tight break-all">{record.청구기호}</span>
       </div>
 
       {/* Row 5: 서명 */}
-      <div className="flex items-start p-1.5" style={{ flex: 2, fontSize: '0.82rem', lineHeight: '1.3', overflow: 'hidden', minHeight: 0 }}>
+      <div className="flex items-start p-1.5" style={{ flex: 1.5, fontSize: '0.8rem', lineHeight: '1.3', overflow: 'hidden', minHeight: 0 }}>
         {record.서명}
       </div>
     </div>
