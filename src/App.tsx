@@ -3,126 +3,131 @@ import * as XLSX from 'xlsx'
 
 interface LoanRecord {
   이용자명: string
-  제공도서관: string
-  등록번호: string
-  자료실: string
-  청구기호: string
-  서명: string
+  요청도서관: string
 }
 
+/* ── 도서관명 자동 변환 ── */
+const LIBRARY_NAME_MAP: Record<string, string> = {
+  '중곡문화체육센터도서관': '중곡도서관',
+}
+
+function normalizeLibraryName(name: string): string {
+  return LIBRARY_NAME_MAP[name] || name
+}
+
+/* ── 광진구립 8개관 색상 (새마을문고 제외) ── */
 const LIBRARY_COLORS: Record<string, string> = {
-  '광진정보도서관': '#5D9CE3',
-  '구의제3동도서관': '#A359C5',
-  '광진구립도서관': '#2563EB',
-  '자양한강도서관': '#0891B2',
-  '중곡도서관': '#16A34A',
-  '군자역도서관': '#EA580C',
-  '어린이영어도서관': '#D97706',
-  '자양제4동도서관': '#DB2777',
-  '예술회관도서관': '#7C3AED',
-  '아차산역도서관': '#059669',
-  '체육센터도서관': '#DC2626',
+  '광진정보도서관': '#135198',
+  '자양한강도서관': '#F15C22',
+  '중곡도서관': '#4B7725',
+  '자양제4동도서관': '#EDCA00',
+  '구의제3동도서관': '#5F5BB3',
+  '군자동도서관': '#E77F9B',
+  '아차산숲속도서관': '#446E98',
+  '광진어린이영어도서관': '#EF4036',
 }
 
-const DEFAULT_COLORS = [
+/* ── 스마트도서관 (통일 색상) ── */
+const SMART_LIBRARIES = [
+  '군자역스마트도서관',
+  '중곡스마트도서관',
+  '구의역스마트도서관',
+  '광진구민체육센터스마트도서관',
+  '광진문화예술회관스마트도서관',
+  '어린이대공원역스마트도서관',
+  '아차산역스마트도서관',
+]
+const SMART_LIBRARY_COLOR = '#555555'
+
+/* ── 폴백 색상 ── */
+const FALLBACK_COLORS = [
   '#6366F1', '#F59E0B', '#10B981', '#EF4444', '#8B5CF6',
   '#F97316', '#14B8A6', '#EC4899', '#84CC16', '#06B6D4',
 ]
 
 function getLibraryColor(name: string): string {
   if (LIBRARY_COLORS[name]) return LIBRARY_COLORS[name]
+  if (SMART_LIBRARIES.includes(name)) return SMART_LIBRARY_COLOR
+  // 부분 매칭: "스마트도서관" 포함 시
+  if (name.includes('스마트도서관')) return SMART_LIBRARY_COLOR
+  // 폴백
   let hash = 0
   for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash)
-  return DEFAULT_COLORS[Math.abs(hash) % DEFAULT_COLORS.length]
+  return FALLBACK_COLORS[Math.abs(hash) % FALLBACK_COLORS.length]
 }
 
+/* ── 엑셀 파싱 ── */
 function parseExcel(buffer: ArrayBuffer): LoanRecord[] {
   const workbook = XLSX.read(buffer, { type: 'array' })
   const sheet = workbook.Sheets[workbook.SheetNames[0]]
   const raw = XLSX.utils.sheet_to_json<string[]>(sheet, { header: 1, defval: '' }) as string[][]
 
-  // Auto-detect header row (first row containing '서명' or '이용자명', up to row 10)
-  let headerRowIdx = 5
+  // Auto-detect header row (first row containing '이용자명' or '서명', up to row 10)
+  let headerRowIdx = -1
   for (let i = 0; i < Math.min(10, raw.length); i++) {
     const row = raw[i].map((c) => String(c).trim())
-    if (row.includes('서명') || row.includes('이용자명')) { headerRowIdx = i; break }
+    if (row.includes('이용자명')) { headerRowIdx = i; break }
   }
+  if (headerRowIdx === -1) return []
 
   const headers = raw[headerRowIdx].map((h) => String(h).trim())
   const col = (name: string) => headers.findIndex((h) => h.includes(name))
 
   const idxName = col('이용자명')
-  const idxLib = col('제공도서관') !== -1 ? col('제공도서관') : col('요청도서관')
-  const idxReg = col('등록번호')
-  const idxRoom = col('자료실')
-  const idxCall = col('청구기호')
-  const idxTitle = col('서명')
+  const idxReqLib = col('요청도서관')
 
-  // If critical columns are missing, return empty to trigger error message
-  if (idxName === -1 || idxTitle === -1) return []
+  if (idxName === -1) return []
 
   const records: LoanRecord[] = []
   for (let i = headerRowIdx + 1; i < raw.length; i++) {
     const row = raw[i]
     const name = String(row[idxName] ?? '').trim()
-    const title = String(row[idxTitle] ?? '').trim()
-    if (!name || !title) continue
+    if (!name) continue
+    const rawLibName = idxReqLib !== -1 ? String(row[idxReqLib] ?? '').trim() : ''
     records.push({
       이용자명: name,
-      제공도서관: idxLib !== -1 ? String(row[idxLib] ?? '').trim() : '',
-      등록번호: idxReg !== -1 ? String(row[idxReg] ?? '').trim() : '',
-      자료실: idxRoom !== -1 ? String(row[idxRoom] ?? '').trim() : '',
-      청구기호: idxCall !== -1 ? String(row[idxCall] ?? '').trim() : '',
-      서명: title,
+      요청도서관: normalizeLibraryName(rawLibName),
     })
   }
   return records
 }
 
+/* ── 2단 라벨 카드 (이름 상단 / 도서관 하단) ── */
 function LoanCard({ record }: { record: LoanRecord }) {
-  const bgColor = getLibraryColor(record.제공도서관)
+  const bgColor = getLibraryColor(record.요청도서관)
   return (
     <div className="border-2 border-black flex flex-col" style={{ height: '100%', overflow: 'hidden' }}>
-      {/* Row 1: 이용자명 */}
-      <div className="border-b-2 border-black flex items-center justify-center py-1.5 flex-shrink-0">
-        <span className="font-black text-center leading-tight" style={{ fontSize: '2.1rem' }}>
+      {/* 상단: 이용자명 */}
+      <div className="flex items-center justify-center flex-1">
+        <span
+          className="font-black text-center leading-tight"
+          style={{ fontSize: '2.4rem', letterSpacing: '0.2em' }}
+        >
           {record.이용자명}
         </span>
       </div>
 
-      {/* Row 2: 제공도서관 */}
+      {/* 하단: 요청도서관 (색상 배경) */}
       <div
-        className="library-badge border-b-2 border-black flex items-center justify-center flex-shrink-0"
-        style={{ backgroundColor: bgColor, minHeight: '3.8rem', padding: '0.5rem 0.25rem' }}
+        className="library-badge flex items-center justify-center flex-shrink-0"
+        style={{
+          backgroundColor: bgColor,
+          padding: '0.7rem 0.25rem',
+          minHeight: '3.2rem',
+        }}
       >
-        <span className="font-black text-white text-center leading-tight" style={{ fontSize: '1.6rem' }}>
-          {record.제공도서관 || '—'}
+        <span
+          className="font-bold text-white text-center leading-tight"
+          style={{ fontSize: '1.3rem', letterSpacing: '0.15em' }}
+        >
+          {record.요청도서관 || '—'}
         </span>
-      </div>
-
-      {/* Row 3: 등록번호 | 자료실 */}
-      <div className="border-b border-black flex flex-shrink-0" style={{ minHeight: '2rem' }}>
-        <div className="flex items-center px-1.5" style={{ flex: 1, fontSize: '0.9rem', fontFamily: 'var(--font-mono)' }}>
-          {record.등록번호}
-        </div>
-        <div className="border-l border-black flex items-center justify-end px-1.5" style={{ flex: 1, fontSize: '0.85rem', textAlign: 'right' }}>
-          {record.자료실}
-        </div>
-      </div>
-
-      {/* Row 4: 청구기호 */}
-      <div className="border-b border-black flex items-center justify-center px-1 py-1 flex-shrink-0" style={{ fontSize: '1rem', fontFamily: 'var(--font-mono)', minHeight: '2.2rem' }}>
-        <span className="text-center leading-tight break-all">{record.청구기호}</span>
-      </div>
-
-      {/* Row 5: 서명 (fills remaining height) */}
-      <div className="flex items-start p-1.5" style={{ flex: 1, fontSize: '0.9rem', lineHeight: '1.35', overflow: 'hidden' }}>
-        {record.서명}
       </div>
     </div>
   )
 }
 
+/* ── A4 페이지 (3×4 = 12칸) ── */
 function A4Page({ records, visible }: { records: LoanRecord[]; visible: boolean }) {
   return (
     <div
@@ -136,9 +141,7 @@ function A4Page({ records, visible }: { records: LoanRecord[]; visible: boolean 
         padding: '4mm',
         gap: '0',
         boxSizing: 'border-box',
-        // Screen shadow; suppressed in print via .a4-page rule in CSS
         boxShadow: '0 4px 24px 0 rgba(0,0,0,0.10)',
-        // Always fully opaque for printing — transition only on mount
         opacity: visible ? 1 : 0,
         transform: visible ? 'translateY(0)' : 'translateY(16px)',
         transition: 'opacity 0.4s ease, transform 0.4s ease',
@@ -152,13 +155,13 @@ function A4Page({ records, visible }: { records: LoanRecord[]; visible: boolean 
   )
 }
 
+/* ── 메인 앱 ── */
 export default function App() {
   const [records, setRecords] = useState<LoanRecord[]>([])
   const [filename, setFilename] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [dragging, setDragging] = useState(false)
   const [visible, setVisible] = useState(false)
-  // Single hidden file input, always mounted — avoids ref conflicts between branches
   const fileRef = useRef<HTMLInputElement>(null)
 
   const handleFile = async (file: File) => {
@@ -174,7 +177,7 @@ export default function App() {
       const buffer = await file.arrayBuffer()
       const parsed = parseExcel(buffer)
       if (parsed.length === 0) {
-        setError("데이터를 찾을 수 없습니다. '이용자명'과 '서명' 컬럼이 포함된 상호대차 양식인지 확인해 주세요.")
+        setError("데이터를 찾을 수 없습니다. '이용자명' 컬럼이 포함된 상호대차 양식인지 확인해 주세요.")
         return
       }
       setRecords(parsed)
@@ -206,7 +209,6 @@ export default function App() {
   }
 
   const handlePrint = () => {
-    // Ensure pages are fully visible before printing
     setVisible(true)
     requestAnimationFrame(() => window.print())
   }
@@ -219,7 +221,6 @@ export default function App() {
   return (
     <div style={{ backgroundColor: '#F2F4F6', minHeight: '100vh', fontFamily: 'var(--font-sans)' }}>
 
-      {/* Single always-mounted file input — avoids ref conflicts */}
       <input ref={fileRef} type="file" accept=".xlsx,.xls" className="hidden" onChange={onFileChange} />
 
       {/* ── Header ── */}
@@ -280,7 +281,7 @@ export default function App() {
                 </span>
               </div>
 
-              {/* Disabled print button — visual hint */}
+              {/* Disabled print button */}
               <button
                 disabled
                 className="mt-4 w-full font-bold rounded-2xl"
@@ -298,7 +299,6 @@ export default function App() {
               </button>
             </>
           ) : (
-            /* After upload: file chip + buttons, perfectly center-aligned */
             <div className="flex items-center gap-4">
               <div
                 onClick={() => fileRef.current?.click()}
