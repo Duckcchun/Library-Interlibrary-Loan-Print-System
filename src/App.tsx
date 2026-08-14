@@ -19,8 +19,8 @@ const LIBRARY_NAME_MAP: Record<string, string> = {
 function normalizeLibraryName(name: string): string {
   // 먼저 직접 매핑 확인
   if (LIBRARY_NAME_MAP[name]) return LIBRARY_NAME_MAP[name]
-  // 스마트도서관: "OO스마트도서관" → "OO" (스마트도서관 제거)
-  if (name.includes('스마트도서관')) return name.replace('스마트도서관', '')
+  // 스마트도서관: "OO스마트도서관" → "OO스마트" (도서관만 제거)
+  if (name.includes('스마트도서관')) return name.replace('스마트도서관', '스마트')
   return name
 }
 
