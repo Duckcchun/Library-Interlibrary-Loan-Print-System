@@ -119,7 +119,7 @@ function LoanCard({ record }: { record: LoanRecord }) {
   return (
     <div className="border-2 border-black flex flex-col" style={{ height: '100%', overflow: 'hidden' }}>
       {/* Row 1: 이용자명 */}
-      <div className="border-b-2 border-black flex items-center justify-center flex-shrink-0" style={{ flex: 3, minHeight: 0 }}>
+      <div className="border-b-2 border-black flex items-center justify-center flex-shrink-0" style={{ flex: 2.7, minHeight: 0 }}>
         <span
           className="font-black text-center leading-tight"
           style={{ fontSize: '2.2rem', letterSpacing: '0.2em' }}
@@ -131,11 +131,11 @@ function LoanCard({ record }: { record: LoanRecord }) {
       {/* Row 2: 요청도서관 */}
       <div
         className="library-badge border-b-2 border-black flex items-center justify-center flex-shrink-0"
-        style={{ backgroundColor: bgColor, flex: 1.5, minHeight: 0 }}
+        style={{ backgroundColor: bgColor, flex: 1.8, minHeight: 0 }}
       >
         <span
           className="font-bold text-white text-center leading-tight"
-          style={{ fontSize: '1.15rem', letterSpacing: '0.15em' }}
+          style={{ fontSize: '1.25rem', letterSpacing: '0.15em' }}
         >
           {record.요청도서관 || '—'}
         </span>
