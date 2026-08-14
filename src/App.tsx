@@ -135,7 +135,7 @@ function LoanCard({ record }: { record: LoanRecord }) {
       >
         <span
           className="font-bold text-white text-center leading-tight"
-          style={{ fontSize: '1.4rem', letterSpacing: '0.08em' }}
+          style={{ fontSize: record.요청도서관.length > 8 ? '1.1rem' : '1.4rem', letterSpacing: '0.08em' }}
         >
           {record.요청도서관 || '—'}
         </span>
@@ -152,7 +152,7 @@ function LoanCard({ record }: { record: LoanRecord }) {
       </div>
 
       {/* Row 4: 청구기호 */}
-      <div className="border-b border-black flex items-center justify-center px-1 flex-shrink-0" style={{ fontSize: '1rem', flex: 1.5, minHeight: 0 }}>
+      <div className="border-b border-black flex items-center justify-center px-1 flex-shrink-0" style={{ fontSize: '1.1rem', flex: 1.5, minHeight: 0 }}>
         <span className="text-center leading-tight break-all">{record.청구기호}</span>
       </div>
 
