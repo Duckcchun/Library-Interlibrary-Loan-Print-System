@@ -119,7 +119,7 @@ function LoanCard({ record }: { record: LoanRecord }) {
   return (
     <div className="border-2 border-black flex flex-col" style={{ height: '100%', overflow: 'hidden' }}>
       {/* Row 1: 이용자명 */}
-      <div className="border-b-2 border-black flex items-center justify-center flex-shrink-0" style={{ flex: 2.7, minHeight: 0 }}>
+      <div className="border-b-2 border-black flex items-center justify-center flex-shrink-0" style={{ flex: 2.4, minHeight: 0 }}>
         <span
           className="font-black text-center leading-tight"
           style={{ fontSize: '2.2rem', letterSpacing: '0.2em' }}
@@ -152,12 +152,12 @@ function LoanCard({ record }: { record: LoanRecord }) {
       </div>
 
       {/* Row 4: 청구기호 */}
-      <div className="border-b border-black flex items-center justify-center px-1 flex-shrink-0" style={{ fontSize: '0.85rem', flex: 1.3, minHeight: 0 }}>
+      <div className="border-b border-black flex items-center justify-center px-1 flex-shrink-0" style={{ fontSize: '0.92rem', flex: 1.5, minHeight: 0 }}>
         <span className="text-center leading-tight break-all">{record.청구기호}</span>
       </div>
 
       {/* Row 5: 서명 */}
-      <div className="flex items-start p-1.5" style={{ flex: 1.5, fontSize: '0.8rem', lineHeight: '1.3', overflow: 'hidden', minHeight: 0 }}>
+      <div className="flex items-start p-1.5" style={{ flex: 1.8, fontSize: '0.88rem', lineHeight: '1.3', overflow: 'hidden', minHeight: 0 }}>
         {record.서명}
       </div>
     </div>
