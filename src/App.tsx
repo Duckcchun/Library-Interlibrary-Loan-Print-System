@@ -64,14 +64,31 @@ const FALLBACK_COLORS = [
 ]
 
 function getLibraryColor(originalName: string): string {
+  // 원본 이름으로 직접 매칭
   if (LIBRARY_COLORS[originalName]) return LIBRARY_COLORS[originalName]
   if (SMART_LIBRARY_COLORS[originalName]) return SMART_LIBRARY_COLORS[originalName]
-  // 아직 등록 안 된 스마트도서관용 폴백
-  if (originalName.includes('스마트도서관')) {
-    let hash = 0
-    for (let i = 0; i < originalName.length; i++) hash = originalName.charCodeAt(i) + ((hash << 5) - hash)
-    return FALLBACK_COLORS[Math.abs(hash) % FALLBACK_COLORS.length]
+  // 공백 제거 후 매칭 시도 (엑셀에 띄어쓰기가 다를 수 있음)
+  const stripped = originalName.replace(/\s/g, '')
+  if (LIBRARY_COLORS[stripped]) return LIBRARY_COLORS[stripped]
+  if (SMART_LIBRARY_COLORS[stripped]) return SMART_LIBRARY_COLORS[stripped]
+  // 변환된 이름으로도 매칭
+  const normalized = normalizeLibraryName(originalName)
+  if (LIBRARY_COLORS[normalized]) return LIBRARY_COLORS[normalized]
+  // 스마트도서관 포함 시 → 부분 매칭
+  if (originalName.includes('스마트') || stripped.includes('스마트')) {
+    for (const [key, color] of Object.entries(SMART_LIBRARY_COLORS)) {
+      if (stripped.includes(key.replace(/\s/g, '')) || key.replace(/\s/g, '').includes(stripped)) return color
+    }
+    // 키워드로 매칭
+    if (stripped.includes('구의역')) return '#8bbeeb'
+    if (stripped.includes('군자역')) return '#8bbeeb'
+    if (stripped.includes('체육센터') || stripped.includes('구민체육')) return '#8bbeeb'
+    if (stripped.includes('문화예술') || stripped.includes('예술회관')) return '#f4ac80'
+    if (stripped.includes('어린이대공원')) return '#f4ac80'
+    if (stripped.includes('중곡')) return '#abe46e'
+    if (stripped.includes('아차산')) return '#abe46e'
   }
+  // 폴백
   let hash = 0
   for (let i = 0; i < originalName.length; i++) hash = originalName.charCodeAt(i) + ((hash << 5) - hash)
   return FALLBACK_COLORS[Math.abs(hash) % FALLBACK_COLORS.length]
