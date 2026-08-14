@@ -19,8 +19,8 @@ const LIBRARY_NAME_MAP: Record<string, string> = {
 function normalizeLibraryName(name: string): string {
   // 먼저 직접 매핑 확인
   if (LIBRARY_NAME_MAP[name]) return LIBRARY_NAME_MAP[name]
-  // 스마트도서관: "OO스마트도서관" → "OO스마트" (도서관만 제거)
-  if (name.includes('스마트도서관')) return name.replace('스마트도서관', '스마트')
+  // 스마트도서관: "OO스마트도서관" → "OO 스마트" (도서관 제거, 스마트 앞 띄어쓰기)
+  if (name.includes('스마트도서관')) return name.replace('스마트도서관', ' 스마트')
   return name
 }
 
@@ -135,7 +135,7 @@ function LoanCard({ record }: { record: LoanRecord }) {
       >
         <span
           className="font-bold text-white text-center leading-tight"
-          style={{ fontSize: '1.25rem', letterSpacing: '0.15em' }}
+          style={{ fontSize: '1.4rem', letterSpacing: '0.08em' }}
         >
           {record.요청도서관 || '—'}
         </span>
@@ -152,12 +152,12 @@ function LoanCard({ record }: { record: LoanRecord }) {
       </div>
 
       {/* Row 4: 청구기호 */}
-      <div className="border-b border-black flex items-center justify-center px-1 flex-shrink-0" style={{ fontSize: '0.92rem', flex: 1.5, minHeight: 0 }}>
+      <div className="border-b border-black flex items-center justify-center px-1 flex-shrink-0" style={{ fontSize: '1rem', flex: 1.5, minHeight: 0 }}>
         <span className="text-center leading-tight break-all">{record.청구기호}</span>
       </div>
 
       {/* Row 5: 서명 */}
-      <div className="flex items-start p-1.5" style={{ flex: 1.8, fontSize: '0.88rem', lineHeight: '1.3', overflow: 'hidden', minHeight: 0 }}>
+      <div className="flex items-start p-1.5" style={{ flex: 1.8, fontSize: '0.95rem', lineHeight: '1.3', overflow: 'hidden', minHeight: 0 }}>
         {record.서명}
       </div>
     </div>
