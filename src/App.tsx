@@ -149,7 +149,7 @@ function LoanCard({ record }: { record: LoanRecord }) {
       <div className="border-b-2 border-black flex items-center justify-center flex-shrink-0" style={{ flex: 2.4, minHeight: 0, paddingTop: '0.3rem' }}>
         <span
           className="font-black text-center leading-tight"
-          style={{ fontSize: '2.2rem', letterSpacing: '0.2em' }}
+          style={{ fontSize: record.이용자명.length > 3 ? '1.8rem' : '2.2rem', letterSpacing: record.이용자명.length > 3 ? '0.12em' : '0.2em' }}
         >
           {record.이용자명}
         </span>
