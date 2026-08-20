@@ -6,6 +6,11 @@
 }
 
 /* Print: hide all screen UI, show only A4 pages */
+@page {
+  size: A4;
+  margin: 0;
+}
+
 @media print {
   body {
     background: white !important;
