@@ -70,17 +70,26 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
       {showCustom && (
         <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100">
           {/* 네이티브 색상 피커 */}
-          <div className="relative flex-shrink-0">
-            <div
-              className="w-9 h-9 rounded-lg border border-gray-200 cursor-pointer"
-              style={{ backgroundColor: value }}
-            />
-            <input
-              type="color"
-              value={value}
-              onChange={(e) => onChange(e.target.value)}
-              className="absolute inset-0 opacity-0 cursor-pointer"
-            />
+          <div className="flex-shrink-0 flex flex-col items-center gap-1.5">
+            <div className="relative">
+              <div
+                className="w-9 h-9 rounded-lg border border-gray-200"
+                style={{ backgroundColor: value }}
+              />
+              <input
+                type="color"
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                className="absolute inset-0 w-9 h-9 opacity-0 cursor-pointer"
+                id="native-color-picker"
+              />
+            </div>
+            <label
+              htmlFor="native-color-picker"
+              className="text-[0.65rem] text-blue-500 font-medium cursor-pointer hover:underline"
+            >
+              팔레트
+            </label>
           </div>
 
           {/* RGB 슬라이더 */}
