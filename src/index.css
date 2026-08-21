@@ -25,11 +25,18 @@
   .a4-page {
     box-shadow: none !important;
     margin: 0 !important;
+    padding: 4mm !important;
     page-break-after: always;
+    page-break-inside: avoid;
   }
 
   .a4-page:last-child {
     page-break-after: avoid;
+  }
+
+  /* 인쇄 시 컨테이너의 여백/간격 제거 */
+  body * {
+    gap: 0 !important;
   }
 }
 

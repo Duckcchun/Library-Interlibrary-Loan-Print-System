@@ -70,7 +70,7 @@ export default function App() {
       {error && <ErrorBanner message={error} />}
 
       {/* A4 페이지 영역 */}
-      <div className="flex flex-col items-center gap-8 pb-20" style={{ backgroundColor: '#E5E7EB' }}>
+      <div className="flex flex-col items-center gap-8 pb-20 print:gap-0 print:pb-0 print:bg-white" style={{ backgroundColor: '#E5E7EB' }}>
         {pages.length === 0 && (
           <div className="no-print text-center py-20">
             <p className="font-semibold text-gray-400" style={{ fontSize: '0.95rem' }}>
