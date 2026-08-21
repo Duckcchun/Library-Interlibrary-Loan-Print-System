@@ -1,10 +1,14 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Header } from '@/components/Header'
 import { DropZone } from '@/components/DropZone'
 import { A4Page } from '@/components/A4Page'
 import { ErrorBanner } from '@/components/ErrorBanner'
+import { PinDialog } from '@/components/PinDialog'
+import { AdminPanel } from '@/components/AdminPanel'
 import { parseExcel } from '@/lib/excel-parser'
 import { sortByCallNumber } from '@/lib/call-number-sort'
+import { loadLibraries, invalidateCache } from '@/lib/library-utils'
+import { useAdminMode } from '@/hooks/useAdminMode'
 import type { LoanRecord } from '@/types/loan'
 
 export default function App() {
@@ -12,6 +16,13 @@ export default function App() {
   const [filename, setFilename] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [visible, setVisible] = useState(false)
+
+  const { isAdmin, showPinDialog, verifyPin, exitAdmin, closePinDialog } = useAdminMode()
+
+  // 앱 시작 시 Supabase에서 도서관 데이터 사전 로드
+  useEffect(() => {
+    loadLibraries()
+  }, [])
 
   const handleFile = async (file: File) => {
     setError(null)
@@ -23,6 +34,8 @@ export default function App() {
     }
 
     try {
+      // 파싱 전에 최신 도서관 데이터 로드
+      await loadLibraries()
       const buffer = await file.arrayBuffer()
       const parsed = parseExcel(buffer)
       if (parsed.length === 0) {
@@ -49,6 +62,12 @@ export default function App() {
   const handlePrint = () => {
     setVisible(true)
     requestAnimationFrame(() => window.print())
+  }
+
+  const handleAdminUpdate = () => {
+    // 관리자가 도서관 정보를 변경하면 캐시 무효화
+    invalidateCache()
+    loadLibraries()
   }
 
   const pages: LoanRecord[][] = []
@@ -82,6 +101,16 @@ export default function App() {
           <A4Page key={pi} records={pageRecords} visible={visible} />
         ))}
       </div>
+
+      {/* 관리자 PIN 다이얼로그 */}
+      {showPinDialog && (
+        <PinDialog onVerify={verifyPin} onClose={closePinDialog} />
+      )}
+
+      {/* 관리자 패널 */}
+      {isAdmin && (
+        <AdminPanel onExit={exitAdmin} onUpdate={handleAdminUpdate} />
+      )}
     </div>
   )
 }
