@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useId } from 'react'
 
 const PRESET_COLORS = [
   '#044984', '#e8630f', '#406d0f', '#d9c000', '#6969be',
@@ -27,14 +27,24 @@ function rgbToHex(r: number, g: number, b: number): string {
 }
 
 export function ColorPicker({ value, onChange }: ColorPickerProps) {
+  const pickerId = useId()
   const [showCustom, setShowCustom] = useState(false)
+  const [hexInput, setHexInput] = useState(value)
   const rgb = hexToRgb(value)
 
   const handleRgbChange = (channel: 'r' | 'g' | 'b', val: string) => {
     const num = parseInt(val) || 0
     const clamped = Math.max(0, Math.min(255, num))
     const newRgb = { ...rgb, [channel]: clamped }
-    onChange(rgbToHex(newRgb.r, newRgb.g, newRgb.b))
+    const hex = rgbToHex(newRgb.r, newRgb.g, newRgb.b)
+    onChange(hex)
+    setHexInput(hex)
+  }
+
+  // 프리셋 또는 네이티브 피커에서 색상 변경 시 hexInput도 동기화
+  const handleColorChange = (color: string) => {
+    onChange(color)
+    setHexInput(color)
   }
 
   return (
@@ -45,7 +55,7 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
           <button
             key={color}
             type="button"
-            onClick={() => { onChange(color); setShowCustom(false) }}
+            onClick={() => { handleColorChange(color); setShowCustom(false) }}
             className="w-6 h-6 rounded-full border-2 transition-transform hover:scale-110"
             style={{
               backgroundColor: color,
@@ -79,13 +89,13 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
               <input
                 type="color"
                 value={value}
-                onChange={(e) => onChange(e.target.value)}
+                onChange={(e) => handleColorChange(e.target.value)}
                 className="absolute inset-0 w-9 h-9 opacity-0 cursor-pointer"
-                id="native-color-picker"
+                id={pickerId}
               />
             </div>
             <label
-              htmlFor="native-color-picker"
+              htmlFor={pickerId}
               className="text-[0.65rem] text-blue-500 font-medium cursor-pointer hover:underline"
             >
               팔레트
@@ -157,17 +167,20 @@ export function ColorPicker({ value, onChange }: ColorPickerProps) {
           <div className="flex-shrink-0">
             <input
               type="text"
-              value={value}
+              value={hexInput}
               onChange={(e) => {
                 const v = e.target.value
-                if (/^#[0-9a-fA-F]{0,6}$/.test(v)) {
-                  if (v.length === 7) onChange(v)
-                  // 입력 중에는 그냥 허용
+                setHexInput(v)
+                if (/^#[0-9a-fA-F]{6}$/.test(v)) {
+                  onChange(v.toLowerCase())
                 }
               }}
-              onBlur={(e) => {
-                const v = e.target.value
-                if (/^#[0-9a-fA-F]{6}$/.test(v)) onChange(v)
+              onBlur={() => {
+                if (/^#[0-9a-fA-F]{6}$/.test(hexInput)) {
+                  onChange(hexInput.toLowerCase())
+                } else {
+                  setHexInput(value) // 유효하지 않으면 원래 값으로 복원
+                }
               }}
               placeholder="#000000"
               className="w-20 text-xs text-center border border-gray-200 rounded-lg px-2 py-1.5 font-mono"

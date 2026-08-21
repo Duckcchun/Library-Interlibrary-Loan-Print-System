@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 
-const ADMIN_PIN = '1234'
+const ADMIN_PIN = import.meta.env.VITE_ADMIN_PIN || '1234'
 const SHIFT_COUNT_REQUIRED = 5
 const SHIFT_TIMEOUT_MS = 3000
 

@@ -44,8 +44,10 @@ export function LoanCard({ record }: { record: LoanRecord }) {
       </div>
 
       {/* Row 5: 서명 */}
-      <div className="flex items-start p-1.5" style={{ flex: 1.8, fontSize: '0.95rem', lineHeight: '1.3', overflow: 'hidden', minHeight: 0 }}>
-        {record.서명}
+      <div className="flex items-start p-1.5" style={{ flex: 1.8, lineHeight: '1.3', overflow: 'hidden', minHeight: 0 }}>
+        <span style={{ fontSize: record.서명.length > 30 ? '0.75rem' : record.서명.length > 20 ? '0.85rem' : '0.95rem', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+          {record.서명}
+        </span>
       </div>
     </div>
   )

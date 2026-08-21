@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase, type LibraryRow } from '@/lib/supabase'
 import { ColorPicker } from '@/components/ColorPicker'
+import { Toast } from '@/components/Toast'
 
 interface AdminPanelProps {
   onExit: () => void
@@ -11,6 +12,11 @@ export function AdminPanel({ onExit, onUpdate }: AdminPanelProps) {
   const [libraries, setLibraries] = useState<LibraryRow[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
+
+  const showToast = useCallback((message: string, type: 'success' | 'error') => {
+    setToast({ message, type })
+  }, [])
 
   // 새 도서관 추가 폼
   const [newName, setNewName] = useState('')
@@ -54,13 +60,16 @@ export function AdminPanel({ onExit, onUpdate }: AdminPanelProps) {
       sort_order: libraries.length,
     })
 
-    if (!error) {
+    if (error) {
+      showToast(error.code === '23505' ? '이미 등록된 도서관명입니다' : '추가 실패: ' + error.message, 'error')
+    } else {
       setNewName('')
       setNewDisplayName('')
       setNewColor('#044984')
       setNewType('general')
       await fetchLibraries()
       onUpdate()
+      showToast('도서관이 추가되었습니다', 'success')
     }
     setSaving(false)
   }
@@ -69,9 +78,12 @@ export function AdminPanel({ onExit, onUpdate }: AdminPanelProps) {
     if (!confirm(`"${name}" 도서관을 삭제하시겠습니까?`)) return
 
     const { error } = await supabase.from('libraries').delete().eq('id', id)
-    if (!error) {
+    if (error) {
+      showToast('삭제 실패: ' + error.message, 'error')
+    } else {
       await fetchLibraries()
       onUpdate()
+      showToast('삭제되었습니다', 'success')
     }
   }
 
@@ -90,10 +102,13 @@ export function AdminPanel({ onExit, onUpdate }: AdminPanelProps) {
       .update({ display_name: editDisplayName, color: editColor })
       .eq('id', editingId)
 
-    if (!error) {
+    if (error) {
+      showToast('저장 실패: ' + error.message, 'error')
+    } else {
       setEditingId(null)
       await fetchLibraries()
       onUpdate()
+      showToast('변경사항이 저장되었습니다', 'success')
     }
     setSaving(false)
   }
@@ -261,6 +276,8 @@ export function AdminPanel({ onExit, onUpdate }: AdminPanelProps) {
           </p>
         </div>
       </div>
+
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   )
 }

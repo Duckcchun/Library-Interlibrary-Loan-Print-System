@@ -5,6 +5,7 @@ import { A4Page } from '@/components/A4Page'
 import { ErrorBanner } from '@/components/ErrorBanner'
 import { PinDialog } from '@/components/PinDialog'
 import { AdminPanel } from '@/components/AdminPanel'
+import { FloatingPrintButton } from '@/components/FloatingPrintButton'
 import { parseExcel } from '@/lib/excel-parser'
 import { sortByCallNumber } from '@/lib/call-number-sort'
 import { loadLibraries, invalidateCache } from '@/lib/library-utils'
@@ -111,6 +112,9 @@ export default function App() {
       {isAdmin && (
         <AdminPanel onExit={exitAdmin} onUpdate={handleAdminUpdate} />
       )}
+
+      {/* 플로팅 인쇄 버튼 — 스크롤 내리면 표시 */}
+      <FloatingPrintButton onPrint={handlePrint} show={records.length > 0} />
     </div>
   )
 }

@@ -12,6 +12,7 @@ interface DropZoneProps {
 export function DropZone({ onFile, filename, recordCount, pageCount, onReset, onPrint }: DropZoneProps) {
   const [dragging, setDragging] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
+  const dragCounterRef = useRef(0)
 
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -21,6 +22,7 @@ export function DropZone({ onFile, filename, recordCount, pageCount, onReset, on
 
   const onDrop = (e: React.DragEvent) => {
     e.preventDefault()
+    dragCounterRef.current = 0
     setDragging(false)
     const file = e.dataTransfer.files?.[0]
     if (file) onFile(file)
@@ -44,9 +46,9 @@ export function DropZone({ onFile, filename, recordCount, pageCount, onReset, on
               aria-label="엑셀 파일 업로드 — 클릭하거나 파일을 드래그하세요"
               onClick={() => fileRef.current?.click()}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileRef.current?.click() } }}
-              onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
-              onDragLeave={() => setDragging(false)}
-              onDrop={onDrop}
+              onDragOver={(e) => { e.preventDefault(); dragCounterRef.current += 1; setDragging(true) }}
+              onDragLeave={() => { dragCounterRef.current -= 1; if (dragCounterRef.current <= 0) { dragCounterRef.current = 0; setDragging(false) } }}
+              onDrop={(e) => { dragCounterRef.current = 0; onDrop(e) }}
               className="flex flex-col items-center justify-center gap-2 cursor-pointer rounded-2xl transition-all duration-200 focus:outline-2 focus:outline-blue-500 focus:outline-offset-2"
               style={{
                 border: `2px dashed ${dragging ? '#3182F6' : '#D1D5DB'}`,
@@ -98,9 +100,9 @@ export function DropZone({ onFile, filename, recordCount, pageCount, onReset, on
               aria-label="다른 엑셀 파일로 교체 — 클릭하거나 드래그하세요"
               onClick={() => fileRef.current?.click()}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileRef.current?.click() } }}
-              onDragOver={(e) => { e.preventDefault(); setDragging(true) }}
-              onDragLeave={() => setDragging(false)}
-              onDrop={onDrop}
+              onDragOver={(e) => { e.preventDefault(); dragCounterRef.current += 1; setDragging(true) }}
+              onDragLeave={() => { dragCounterRef.current -= 1; if (dragCounterRef.current <= 0) { dragCounterRef.current = 0; setDragging(false) } }}
+              onDrop={(e) => { dragCounterRef.current = 0; onDrop(e) }}
               className="flex items-center gap-3 cursor-pointer rounded-2xl px-4 py-3 transition-all duration-200 flex-1 min-w-0 focus:outline-2 focus:outline-blue-500 focus:outline-offset-2"
               style={{
                 border: `1.5px dashed ${dragging ? '#3182F6' : '#D1D5DB'}`,
