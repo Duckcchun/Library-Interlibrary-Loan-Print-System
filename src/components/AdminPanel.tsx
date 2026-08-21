@@ -1,17 +1,11 @@
 import { useState, useEffect } from 'react'
 import { supabase, type LibraryRow } from '@/lib/supabase'
+import { ColorPicker } from '@/components/ColorPicker'
 
 interface AdminPanelProps {
   onExit: () => void
   onUpdate: () => void
 }
-
-const PRESET_COLORS = [
-  '#044984', '#e8630f', '#406d0f', '#d9c000', '#6969be',
-  '#e591ab', '#487497', '#e84b4b', '#8bbeeb', '#abe46e',
-  '#f4ac80', '#6366F1', '#F59E0B', '#10B981', '#EF4444',
-  '#8B5CF6', '#F97316', '#14B8A6', '#EC4899', '#06B6D4',
-]
 
 export function AdminPanel({ onExit, onUpdate }: AdminPanelProps) {
   const [libraries, setLibraries] = useState<LibraryRow[]>([])
@@ -21,7 +15,7 @@ export function AdminPanel({ onExit, onUpdate }: AdminPanelProps) {
   // 새 도서관 추가 폼
   const [newName, setNewName] = useState('')
   const [newDisplayName, setNewDisplayName] = useState('')
-  const [newColor, setNewColor] = useState(PRESET_COLORS[0])
+  const [newColor, setNewColor] = useState('#044984')
   const [newType, setNewType] = useState<'general' | 'smart'>('general')
 
   // 편집 중인 항목
@@ -63,7 +57,7 @@ export function AdminPanel({ onExit, onUpdate }: AdminPanelProps) {
     if (!error) {
       setNewName('')
       setNewDisplayName('')
-      setNewColor(PRESET_COLORS[0])
+      setNewColor('#044984')
       setNewType('general')
       await fetchLibraries()
       onUpdate()
@@ -154,23 +148,9 @@ export function AdminPanel({ onExit, onUpdate }: AdminPanelProps) {
                 <option value="smart">스마트도서관</option>
               </select>
 
-              <div className="flex items-center gap-2 flex-1">
-                <span className="text-sm text-gray-500 flex-shrink-0">색상:</span>
-                <div className="flex flex-wrap gap-1.5">
-                  {PRESET_COLORS.map((color) => (
-                    <button
-                      key={color}
-                      type="button"
-                      onClick={() => setNewColor(color)}
-                      className="w-6 h-6 rounded-full border-2 transition-transform hover:scale-110"
-                      style={{
-                        backgroundColor: color,
-                        borderColor: newColor === color ? '#1F2937' : 'transparent',
-                        transform: newColor === color ? 'scale(1.2)' : 'scale(1)',
-                      }}
-                    />
-                  ))}
-                </div>
+              <div className="flex-1">
+                <span className="text-sm text-gray-500 mb-1 block">색상:</span>
+                <ColorPicker value={newColor} onChange={setNewColor} />
               </div>
             </div>
 
@@ -205,41 +185,39 @@ export function AdminPanel({ onExit, onUpdate }: AdminPanelProps) {
                   {editingId === lib.id ? (
                     // 편집 모드
                     <>
-                      <div
-                        className="w-8 h-8 rounded-full flex-shrink-0 cursor-pointer relative group"
-                        style={{ backgroundColor: editColor }}
-                      >
-                        <input
-                          type="color"
-                          value={editColor}
-                          onChange={(e) => setEditColor(e.target.value)}
-                          className="absolute inset-0 opacity-0 cursor-pointer"
-                        />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-xs text-gray-400">{lib.name}</p>
-                        <input
-                          type="text"
-                          value={editDisplayName}
-                          onChange={(e) => setEditDisplayName(e.target.value)}
-                          className="w-full px-2 py-1 border border-gray-200 rounded-lg text-sm font-medium focus:outline-none focus:border-blue-500"
-                        />
-                      </div>
-                      <div className="flex gap-1.5">
-                        <button
-                          onClick={handleSaveEdit}
-                          disabled={saving}
-                          className="px-3 py-1.5 text-xs font-medium text-white rounded-lg"
-                          style={{ backgroundColor: '#3182F6' }}
-                        >
-                          저장
-                        </button>
-                        <button
-                          onClick={() => setEditingId(null)}
-                          className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg"
-                        >
-                          취소
-                        </button>
+                      <div className="flex-1 min-w-0 space-y-2">
+                        <div className="flex items-center gap-3">
+                          <div
+                            className="w-8 h-8 rounded-full flex-shrink-0"
+                            style={{ backgroundColor: editColor }}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs text-gray-400">{lib.name}</p>
+                            <input
+                              type="text"
+                              value={editDisplayName}
+                              onChange={(e) => setEditDisplayName(e.target.value)}
+                              className="w-full px-2 py-1 border border-gray-200 rounded-lg text-sm font-medium focus:outline-none focus:border-blue-500"
+                            />
+                          </div>
+                          <div className="flex gap-1.5">
+                            <button
+                              onClick={handleSaveEdit}
+                              disabled={saving}
+                              className="px-3 py-1.5 text-xs font-medium text-white rounded-lg"
+                              style={{ backgroundColor: '#3182F6' }}
+                            >
+                              저장
+                            </button>
+                            <button
+                              onClick={() => setEditingId(null)}
+                              className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 rounded-lg"
+                            >
+                              취소
+                            </button>
+                          </div>
+                        </div>
+                        <ColorPicker value={editColor} onChange={setEditColor} />
                       </div>
                     </>
                   ) : (
