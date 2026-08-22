@@ -19,18 +19,27 @@ function extractSortKey(callNumber: string): { classification: number; rest: str
   return { classification, rest }
 }
 
-/** 청구기호 기준으로 레코드를 정렬 (분류번호 오름차순 → 저자기호 ㄱㄴㄷ순) */
+/**
+ * 레코드를 정렬
+ * 1순위: 예약전환 건이 맨 위
+ * 2순위: 청구기호 순 (분류번호 오름차순 → 저자기호 ㄱㄴㄷ순)
+ */
 export function sortByCallNumber(records: LoanRecord[]): LoanRecord[] {
   return [...records].sort((a, b) => {
+    // 예약전환 건을 맨 위로
+    if (a.예약전환 !== b.예약전환) {
+      return a.예약전환 ? -1 : 1
+    }
+
     const keyA = extractSortKey(a.청구기호)
     const keyB = extractSortKey(b.청구기호)
 
-    // 1차: 분류번호 숫자 비교
+    // 분류번호 숫자 비교
     if (keyA.classification !== keyB.classification) {
       return keyA.classification - keyB.classification
     }
 
-    // 2차: 나머지 부분 한글 사전순 비교
+    // 나머지 부분 한글 사전순 비교
     return keyA.rest.localeCompare(keyB.rest, 'ko')
   })
 }

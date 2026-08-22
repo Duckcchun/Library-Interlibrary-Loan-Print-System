@@ -6,4 +6,5 @@ export interface LoanRecord {
   자료실: string
   청구기호: string
   서명: string
+  예약전환: boolean
 }

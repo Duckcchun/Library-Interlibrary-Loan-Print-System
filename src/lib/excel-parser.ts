@@ -34,6 +34,7 @@ export function parseExcel(buffer: ArrayBuffer): LoanRecord[] {
   const idxRoom = findColumn(headers, ['자료실', '소장위치', '배가위치', '서고'])
   const idxCall = findColumn(headers, ['청구기호', '청구 기호'])
   const idxTitle = findColumn(headers, ['서명', '도서명', '자료명', '책제목'])
+  const idxNote = findColumn(headers, ['예약자비고', '예약자 비고', '비고'])
 
   if (idxName === -1 && idxTitle === -1) return []
 
@@ -49,6 +50,10 @@ export function parseExcel(buffer: ArrayBuffer): LoanRecord[] {
     if (!name && !title) continue
 
     const rawLibName = idxReqLib !== -1 ? String(row[idxReqLib] ?? '').trim() : ''
+    const note = idxNote !== -1 ? String(row[idxNote] ?? '').trim() : ''
+    // "예약전환" 문구가 포함되면 예약전환 건으로 표시 ([예약전환], 예약전환 등 모두 대응)
+    const isReservationTransfer = note.replace(/[[\]\s]/g, '').includes('예약전환')
+
     records.push({
       이용자명: name,
       요청도서관: normalizeLibraryName(rawLibName),
@@ -57,6 +62,7 @@ export function parseExcel(buffer: ArrayBuffer): LoanRecord[] {
       자료실: idxRoom !== -1 ? String(row[idxRoom] ?? '').trim() : '',
       청구기호: idxCall !== -1 ? String(row[idxCall] ?? '').trim() : '',
       서명: title,
+      예약전환: isReservationTransfer,
     })
   }
   return records
