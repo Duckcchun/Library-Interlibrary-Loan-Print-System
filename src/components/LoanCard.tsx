@@ -1,10 +1,69 @@
+import { useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import type { LoanRecord } from '@/types/loan'
 import { getLibraryColor } from '@/lib/library-utils'
 
-export function LoanCard({ record }: { record: LoanRecord }) {
+interface LoanCardProps {
+  record: LoanRecord
+  onDelete?: (id: string) => void
+  /** DragOverlay에서 렌더링될 때 — 정적으로 표시 */
+  overlay?: boolean
+}
+
+export function LoanCard({ record, onDelete, overlay }: LoanCardProps) {
   const bgColor = getLibraryColor(record.요청도서관_원본)
+
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: record.id, disabled: overlay })
+
+  const style: React.CSSProperties = overlay
+    ? { height: '100%' }
+    : {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        // 드래그 중인 원본은 자리에 흐리게 남김 (오버레이가 마우스를 따라감)
+        opacity: isDragging ? 0.35 : 1,
+        height: '100%',
+        cursor: 'grab',
+        touchAction: 'none',
+        position: 'relative',
+      }
+
   return (
-    <div className="border-2 border-black flex flex-col" style={{ height: '100%', overflow: 'hidden' }}>
+    <div
+      ref={overlay ? undefined : setNodeRef}
+      style={style}
+      className="group border-2 border-black flex flex-col"
+      {...(overlay ? {} : attributes)}
+      {...(overlay ? {} : listeners)}
+    >
+      {/* 삭제 버튼 — hover 시 나타남, 인쇄 시 숨김 */}
+      {!overlay && onDelete && (
+        <button
+          type="button"
+          aria-label="카드 삭제"
+          // 드래그 센서로 이벤트가 넘어가지 않도록 차단
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation()
+            onDelete(record.id)
+          }}
+          className="no-print absolute top-1 right-1 z-10 w-6 h-6 rounded-full flex items-center justify-center bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-150 shadow-md hover:bg-red-600"
+          style={{ fontSize: '1rem', lineHeight: 1 }}
+        >
+          <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+            <line x1="5" y1="5" x2="19" y2="19" />
+            <line x1="19" y1="5" x2="5" y2="19" />
+          </svg>
+        </button>
+      )}
+
       {/* Row 1: 이용자명 */}
       <div className="border-b-2 border-black flex items-center justify-center flex-shrink-0" style={{ flex: 2.4, minHeight: 0, paddingTop: '0.3rem' }}>
         <span

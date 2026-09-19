@@ -7,9 +7,11 @@ interface DropZoneProps {
   pageCount: number
   onReset: () => void
   onPrint: () => void
+  onRestoreSort: () => void
+  canRestoreSort: boolean
 }
 
-export function DropZone({ onFile, filename, recordCount, pageCount, onReset, onPrint }: DropZoneProps) {
+export function DropZone({ onFile, filename, recordCount, pageCount, onReset, onPrint, onRestoreSort, canRestoreSort }: DropZoneProps) {
   const [dragging, setDragging] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
   const dragCounterRef = useRef(0)
@@ -117,11 +119,25 @@ export function DropZone({ onFile, filename, recordCount, pageCount, onReset, on
               </div>
               <div className="min-w-0">
                 <p className="font-semibold text-gray-800 truncate" style={{ fontSize: '0.85rem' }}>{filename}</p>
-                <p className="text-gray-400" style={{ fontSize: '0.72rem' }}>총 {recordCount}건 · {pageCount}페이지 · 클릭해서 교체</p>
+                <p className="text-gray-400" style={{ fontSize: '0.72rem' }}>총 {recordCount}건 · {pageCount}페이지 · 카드를 끌어 순서 변경 · 클릭해서 교체</p>
               </div>
             </div>
 
             <div className="flex items-center gap-2 flex-shrink-0">
+              {canRestoreSort && (
+                <button
+                  onClick={onRestoreSort}
+                  title="청구기호 순으로 되돌립니다"
+                  className="flex items-center gap-1.5 font-medium rounded-2xl transition-all duration-150 text-gray-600 hover:bg-gray-200"
+                  style={{ fontSize: '0.85rem', padding: '0.7rem 1rem', backgroundColor: '#F3F4F6' }}
+                >
+                  <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M3 12a9 9 0 1 0 9-9 9 9 0 0 0-6.36 2.64L3 8" />
+                    <path d="M3 3v5h5" />
+                  </svg>
+                  정렬 초기화
+                </button>
+              )}
               <button
                 onClick={onReset}
                 className="font-medium rounded-2xl transition-all duration-150 text-gray-500 hover:bg-gray-200"

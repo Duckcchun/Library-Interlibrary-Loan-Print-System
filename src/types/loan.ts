@@ -1,4 +1,5 @@
 export interface LoanRecord {
+  id: string
   이용자명: string
   요청도서관: string
   요청도서관_원본: string

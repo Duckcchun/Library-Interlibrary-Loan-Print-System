@@ -1,7 +1,13 @@
 import type { LoanRecord } from '@/types/loan'
 import { LoanCard } from '@/components/LoanCard'
 
-export function A4Page({ records, visible }: { records: LoanRecord[]; visible: boolean }) {
+interface A4PageProps {
+  records: LoanRecord[]
+  visible: boolean
+  onDelete?: (id: string) => void
+}
+
+export function A4Page({ records, visible, onDelete }: A4PageProps) {
   return (
     <div
       className="a4-page bg-white mx-auto"
@@ -20,7 +26,7 @@ export function A4Page({ records, visible }: { records: LoanRecord[]; visible: b
         transition: 'opacity 0.4s ease, transform 0.4s ease',
       }}
     >
-      {records.map((r, i) => <LoanCard key={i} record={r} />)}
+      {records.map((r) => <LoanCard key={r.id} record={r} onDelete={onDelete} />)}
       {Array.from({ length: 12 - records.length }).map((_, i) => (
         <div key={`empty-${i}`} className="border-2 border-black border-dashed opacity-20" />
       ))}
