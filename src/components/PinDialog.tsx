@@ -1,22 +1,27 @@
 import { useState, useRef, useEffect } from 'react'
 
 interface PinDialogProps {
-  onVerify: (pin: string) => boolean
+  onVerify: (pin: string) => Promise<boolean>
   onClose: () => void
 }
 
 export function PinDialog({ onVerify, onClose }: PinDialogProps) {
   const [pin, setPin] = useState('')
   const [error, setError] = useState(false)
+  const [verifying, setVerifying] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     inputRef.current?.focus()
   }, [])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!onVerify(pin)) {
+    if (verifying) return
+    setVerifying(true)
+    const ok = await onVerify(pin)
+    setVerifying(false)
+    if (!ok) {
       setError(true)
       setPin('')
       inputRef.current?.focus()
@@ -59,10 +64,11 @@ export function PinDialog({ onVerify, onClose }: PinDialogProps) {
             </button>
             <button
               type="submit"
-              className="flex-1 py-2.5 rounded-xl font-bold text-white transition-colors"
+              disabled={verifying}
+              className="flex-1 py-2.5 rounded-xl font-bold text-white transition-colors disabled:opacity-60"
               style={{ backgroundColor: '#3182F6' }}
             >
-              확인
+              {verifying ? '확인 중...' : '확인'}
             </button>
           </div>
         </form>

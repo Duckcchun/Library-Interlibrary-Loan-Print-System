@@ -4,11 +4,12 @@ import { ColorPicker } from '@/components/ColorPicker'
 import { Toast } from '@/components/Toast'
 
 interface AdminPanelProps {
+  pin: string
   onExit: () => void
   onUpdate: () => void
 }
 
-export function AdminPanel({ onExit, onUpdate }: AdminPanelProps) {
+export function AdminPanel({ pin, onExit, onUpdate }: AdminPanelProps) {
   const [libraries, setLibraries] = useState<LibraryRow[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -52,16 +53,24 @@ export function AdminPanel({ onExit, onUpdate }: AdminPanelProps) {
     if (!newName.trim()) return
 
     setSaving(true)
-    const { error } = await supabase.from('libraries').insert({
-      name: newName.trim(),
-      display_name: newDisplayName.trim() || newName.trim(),
-      color: newColor,
-      type: newType,
-      sort_order: libraries.length,
+    // 쓰기는 PIN을 DB에서 검증하는 RPC를 통해서만 수행 (anon 키 직접 쓰기 차단)
+    const { error } = await supabase.rpc('admin_add_library', {
+      p_pin: pin,
+      p_name: newName.trim(),
+      p_display_name: newDisplayName.trim() || newName.trim(),
+      p_color: newColor,
+      p_type: newType,
+      p_sort_order: libraries.length,
     })
 
     if (error) {
-      showToast(error.code === '23505' ? '이미 등록된 도서관명입니다' : '추가 실패: ' + error.message, 'error')
+      const msg =
+        error.code === '28000'
+          ? 'PIN 인증이 만료되었습니다. 다시 로그인해 주세요.'
+          : error.code === '23505'
+            ? '이미 등록된 도서관명입니다'
+            : '추가 실패: ' + error.message
+      showToast(msg, 'error')
     } else {
       setNewName('')
       setNewDisplayName('')
@@ -77,9 +86,12 @@ export function AdminPanel({ onExit, onUpdate }: AdminPanelProps) {
   const handleDelete = async (id: string, name: string) => {
     if (!confirm(`"${name}" 도서관을 삭제하시겠습니까?`)) return
 
-    const { error } = await supabase.from('libraries').delete().eq('id', id)
+    const { error } = await supabase.rpc('admin_delete_library', { p_pin: pin, p_id: id })
     if (error) {
-      showToast('삭제 실패: ' + error.message, 'error')
+      showToast(
+        error.code === '28000' ? 'PIN 인증이 만료되었습니다. 다시 로그인해 주세요.' : '삭제 실패: ' + error.message,
+        'error'
+      )
     } else {
       await fetchLibraries()
       onUpdate()
@@ -97,13 +109,18 @@ export function AdminPanel({ onExit, onUpdate }: AdminPanelProps) {
     if (!editingId) return
 
     setSaving(true)
-    const { error } = await supabase
-      .from('libraries')
-      .update({ display_name: editDisplayName, color: editColor })
-      .eq('id', editingId)
+    const { error } = await supabase.rpc('admin_update_library', {
+      p_pin: pin,
+      p_id: editingId,
+      p_display_name: editDisplayName,
+      p_color: editColor,
+    })
 
     if (error) {
-      showToast('저장 실패: ' + error.message, 'error')
+      showToast(
+        error.code === '28000' ? 'PIN 인증이 만료되었습니다. 다시 로그인해 주세요.' : '저장 실패: ' + error.message,
+        'error'
+      )
     } else {
       setEditingId(null)
       await fetchLibraries()

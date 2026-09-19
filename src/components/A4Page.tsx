@@ -1,5 +1,6 @@
 import type { LoanRecord } from '@/types/loan'
 import { LoanCard } from '@/components/LoanCard'
+import { CARD_COLS, CARD_ROWS, CARDS_PER_PAGE } from '@/lib/layout'
 
 interface A4PageProps {
   records: LoanRecord[]
@@ -15,8 +16,8 @@ export function A4Page({ records, visible, onDelete }: A4PageProps) {
         width: '210mm',
         height: '297mm',
         display: 'grid',
-        gridTemplateColumns: 'repeat(3, 1fr)',
-        gridTemplateRows: 'repeat(4, 1fr)',
+        gridTemplateColumns: `repeat(${CARD_COLS}, 1fr)`,
+        gridTemplateRows: `repeat(${CARD_ROWS}, 1fr)`,
         padding: '4mm',
         gap: '0',
         boxSizing: 'border-box',
@@ -27,7 +28,7 @@ export function A4Page({ records, visible, onDelete }: A4PageProps) {
       }}
     >
       {records.map((r) => <LoanCard key={r.id} record={r} onDelete={onDelete} />)}
-      {Array.from({ length: 12 - records.length }).map((_, i) => (
+      {Array.from({ length: CARDS_PER_PAGE - records.length }).map((_, i) => (
         <div key={`empty-${i}`} className="border-2 border-black border-dashed opacity-20" />
       ))}
     </div>
