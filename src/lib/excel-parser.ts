@@ -55,6 +55,7 @@ export function parseExcel(buffer: ArrayBuffer): LoanRecord[] {
     const isReservationTransfer = note.replace(/[[\]\s]/g, '').includes('예약전환')
 
     records.push({
+      id: `rec-${i}-${records.length}`,
       이용자명: name,
       요청도서관: normalizeLibraryName(rawLibName),
       요청도서관_원본: rawLibName,
