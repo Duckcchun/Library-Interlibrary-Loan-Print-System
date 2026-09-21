@@ -10,8 +10,15 @@
 --       통해서만 수행한다. PIN은 클라이언트가 아니라 서버(DB)에서 대조되므로
 --       anon 키만으로는 데이터를 변경할 수 없다.
 --
--- 실행: Supabase 대시보드 > SQL Editor 에서 이 파일 전체를 실행하세요.
---       (기존 supabase-schema.sql 로 테이블을 만든 뒤 실행)
+-- 실행: Supabase 대시보드 > SQL Editor 에서 "이 파일 전체"를 붙여넣고 실행하세요.
+--       (테이블이 없다면 supabase-schema.sql 로 먼저 테이블을 만든 뒤 실행)
+--
+--       이 스크립트는 멱등(idempotent)합니다 — 여러 번 실행해도 에러 없이
+--       동일한 결과가 됩니다. 이전에 일부만 실행돼 에러가 났더라도,
+--       이 파일 전체를 다시 한 번 실행하면 깔끔하게 정리됩니다.
+--
+-- 주의: 옛 supabase-schema.sql 하단의 "Anyone can insert/update/delete" 정책과는
+--       충돌하지 않습니다. 이 파일이 해당 정책을 DROP 후 재구성하기 때문입니다.
 -- ============================================================================
 
 -- ----------------------------------------------------------------------------
@@ -45,6 +52,8 @@ DROP POLICY IF EXISTS "Anyone can update libraries" ON libraries;
 DROP POLICY IF EXISTS "Anyone can delete libraries" ON libraries;
 
 -- 읽기만 공개 (카드 색상/표시명은 모두가 조회 가능해야 함)
+-- 이미 있으면 지우고 다시 만든다 → 여러 번 실행해도 안전(멱등)
+DROP POLICY IF EXISTS "Public read libraries" ON libraries;
 CREATE POLICY "Public read libraries"
   ON libraries FOR SELECT
   USING (true);
