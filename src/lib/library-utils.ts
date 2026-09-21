@@ -1,12 +1,24 @@
 import localConfig from '@/data/library-config.json'
 import { supabase, type LibraryRow } from '@/lib/supabase'
 
+// ============================================================================
+// 도서관 데이터 소스 정책
+// ----------------------------------------------------------------------------
+// 단일 진실 소스(Single Source of Truth)는 Supabase의 `libraries` 테이블이다.
+// 관리자 패널에서의 추가/수정/삭제는 모두 Supabase에만 반영된다.
+//
+// `library-config.json`(localConfig)은 "비상용 기본값"일 뿐이다.
+//   - Supabase 연결 실패 등으로 데이터를 못 받았을 때만 사용된다.
+//   - 관리자 변경 사항은 여기에 반영되지 않으므로 최신이 아닐 수 있다.
+//   - 즉, 이 파일은 앱이 완전히 멈추지 않도록 하는 최소한의 폴백 상수다.
+// ============================================================================
+
 const { fallbackColors } = localConfig
 
 // 런타임 캐시
 let cachedLibraries: LibraryRow[] | null = null
 
-/** Supabase에서 도서관 데이터 로드 (캐시 사용) */
+/** 단일 진실 소스인 Supabase `libraries`에서 도서관 데이터 로드 (런타임 캐시 사용) */
 export async function loadLibraries(): Promise<LibraryRow[]> {
   if (cachedLibraries) return cachedLibraries
 
@@ -21,7 +33,7 @@ export async function loadLibraries(): Promise<LibraryRow[]> {
       return data
     }
   } catch {
-    // Supabase 연결 실패 시 로컬 폴백
+    // Supabase 연결 실패 — 아래에서 빈 배열 반환. normalize/color 함수가 비상용 기본값으로 폴백한다.
   }
 
   return []
@@ -44,7 +56,7 @@ export function normalizeLibraryName(name: string): string {
     if (found) return found.display_name
   }
 
-  // 로컬 폴백
+  // 비상용 폴백 (Supabase 미로드 시): library-config.json 기본값
   const { nameMap, smartNameMap } = localConfig
   if (nameMap[name as keyof typeof nameMap]) {
     return nameMap[name as keyof typeof nameMap]
@@ -71,7 +83,7 @@ export function getLibraryColor(originalName: string): string {
     if (found) return found.color
   }
 
-  // 로컬 폴백
+  // 비상용 폴백 (Supabase 미로드 시): library-config.json 기본값
   const { libraryColors, smartLibraryColors } = localConfig
   if (libraryColors[originalName as keyof typeof libraryColors]) {
     return libraryColors[originalName as keyof typeof libraryColors]

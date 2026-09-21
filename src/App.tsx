@@ -29,9 +29,8 @@ import { parseExcel } from '@/lib/excel-parser'
 import { sortByCallNumber } from '@/lib/call-number-sort'
 import { loadLibraries, invalidateCache } from '@/lib/library-utils'
 import { useAdminMode } from '@/hooks/useAdminMode'
+import { CARDS_PER_PAGE } from '@/lib/layout'
 import type { LoanRecord } from '@/types/loan'
-
-const CARDS_PER_PAGE = 12
 
 export default function App() {
   // 원본(청구기호 정렬) — 정렬 초기화 시 복원용
@@ -48,7 +47,7 @@ export default function App() {
   const deletedRef = useRef<{ record: LoanRecord; index: number } | null>(null)
   const [undoToast, setUndoToast] = useState(false)
 
-  const { isAdmin, showPinDialog, verifyPin, exitAdmin, closePinDialog } = useAdminMode()
+  const { isAdmin, adminPin, showPinDialog, verifyPin, exitAdmin, closePinDialog } = useAdminMode()
 
   const sensors = useSensors(
     // 8px 이상 움직여야 드래그 시작 — 클릭(삭제 버튼 등)과 구분
@@ -224,8 +223,8 @@ export default function App() {
       )}
 
       {/* 관리자 패널 */}
-      {isAdmin && (
-        <AdminPanel onExit={exitAdmin} onUpdate={handleAdminUpdate} />
+      {isAdmin && adminPin && (
+        <AdminPanel pin={adminPin} onExit={exitAdmin} onUpdate={handleAdminUpdate} />
       )}
 
       {/* 플로팅 인쇄 버튼 — 스크롤 내리면 표시 */}
